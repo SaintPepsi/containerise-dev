@@ -1,0 +1,8 @@
+{
+  "name": "fixture-npm-playwright",
+  "scripts": {
+    "test": "playwright test",
+    "build": "node build.mjs",
+    "test:snapshots": "docker run --rm -v \"$PWD\":/work mcr.microsoft.com/playwright:v1.60.0-jammy bash -lc 'npm test'"
+  }
+}
