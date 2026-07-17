@@ -1,0 +1,11 @@
+{
+  "name": "containerise-dev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Claude skill: turn any repo into a containerised dev environment (devcontainer + optional Claude Code pass-through), with the known bind-mount/auth pitfalls fixed by default.",
+  "scripts": {
+    "test": "bun test test/"
+  },
+  "license": "MIT"
+}
