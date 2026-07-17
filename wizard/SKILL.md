@@ -13,9 +13,14 @@ One question per decision, detection as context rather than proposal.
       rebuilds) and that `host.claudeCredentials` is `«value»`. On/off.
    3. **Volume + user fixes** — explain the bind-mount corruption trap in one
       line (container installs rewriting host `«dependencyDirs»`). On/off.
-   4. **Test command** for Gate 2 — confirm `commands.test` or take a
+   4. **Preferred shell** — run
+      `node «this skill's directory»/scripts/shell-env.mjs` first; offer to
+      install their shell (`«shell»`, plus `«frameworks»` if any) as the
+      container default. On/off.
+   5. **Test command** for the suite gate — confirm `commands.test` or take a
       correction; "none" is a valid answer and flags the run UNVERIFIED.
 3. Produce the layer selection contract
-   (`{ base: { image, source }, layers: { claude, volumes } }`).
+   (`{ base: { image, source }, layers: { claude, volumes, shell }, testCommand }`).
 
-Hand the layer selection to `../PIPELINE.md` and follow it.
+Return the layer selection to the router (`../SKILL.md` step 4), which
+assembles the run from the chosen layers.

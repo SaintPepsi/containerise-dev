@@ -13,10 +13,13 @@ Scan first, propose a complete config, confirm once.
      repo signal.
    - **Claude layer:** default ON iff `host.claudeCredentials` is not `none`.
    - **Volumes layer:** default ON iff `dependencyDirs` is non-empty.
+   - **Shell layer:** run `node «this skill's directory»/scripts/shell-env.mjs`;
+     default ON iff the detected shell is not the image's default (e.g. zsh).
 4. Present the whole proposal as ONE AskUserQuestion round: accept as-is /
    toggle layers / change base image (multiSelect where it helps). Include the
-   test command you'll use for Gate 2 so the user can correct it now.
+   test command you'll use for the suite gate so the user can correct it now.
 5. Produce the layer selection contract
-   (`{ base: { image, source }, layers: { claude, volumes } }`).
+   (`{ base: { image, source }, layers: { claude, volumes, shell }, testCommand }`).
 
-Hand the layer selection to `../PIPELINE.md` and follow it.
+Return the layer selection to the router (`../SKILL.md` step 4), which
+assembles the run from the chosen layers.

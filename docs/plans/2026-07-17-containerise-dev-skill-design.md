@@ -171,3 +171,16 @@ the pitfalls) so every run on a new repo feeds the next version.
   until a Linux trial — flagged in README as a known unknown.
 - Whether the retro step should also self-file the issue when the user approves, or
   always leave filing to the user.
+
+---
+
+## Addendum (2026-07-17, post-v0.1): JIT layer architecture
+
+Ian's ruling after first build: use just-in-time context, /Algorithm-style. The
+monolithic `PIPELINE.md` was replaced by self-contained layers —
+`layers/«name»/LAYER.md` + `template.jsonc`, each carrying its own Generate
+steps, Gate, and Report notes. The router (SKILL.md step 4) assembles the run
+from the selection: only chosen layers' docs load, and the final gate checklist
+is composed from them. Modes still return only a selection contract (now with
+`shell` and `testCommand`). New layer: `shell` (host shell probe via
+`scripts/shell-env.mjs`, dotfiles guidance kept at user level).

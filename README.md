@@ -43,8 +43,17 @@ generates and verifies.
     deleted after install.
   - **Volume + user fixes**: named volumes over dependency dirs (so container
     installs can't corrupt your host `node_modules`) and a non-root user.
+  - **Preferred shell**: detects your host shell (zsh, oh-my-zsh, starship,
+    dotfiles repo) and installs it as the container default; personal dotfiles
+    are guided to the user-level `dotfiles.repository` setting, never baked
+    into project config.
 - `scripts/devcontainer-auth.mjs` — vendored transport script (only with the
   Claude layer).
+
+Internally the skill is a router over self-contained layers
+(`layers/*/LAYER.md` holds each layer's template, generation steps, and
+verification gate); only the layers you select get loaded, and the final gate
+checklist is assembled from your selection.
 
 ## The gates
 
