@@ -1,0 +1,7 @@
+// Base layer — always included. «placeholders» are substituted by the model
+// from detection output + the user's confirmed choices.
+{
+  "name": "«project» Dev",
+  "image": "«base image — prefer a detected trustedImage; state why in the report»",
+  "containerEnv": { "CI": "1" }
+}

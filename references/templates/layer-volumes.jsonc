@@ -1,0 +1,8 @@
+// Volume + user fixes layer (pitfalls 1 and 2).
+{
+  "mounts": [
+    // One per detected dependencyDir:
+    "source=«project»-«dir»,target=${containerWorkspaceFolder}/«dir»,type=volume"
+  ],
+  "remoteUser": "«non-root user available in the base image, e.g. pwuser/node»"
+}
