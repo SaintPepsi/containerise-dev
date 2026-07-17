@@ -2,17 +2,27 @@
 
 ## Generate
 
-Merge `./template.jsonc` as the foundation. Substitute `«project»` and
-`«base image»` — prefer a detection `trustedImages` entry and state its source in
-the report ("your CI already runs this image"); a toolchain-official image is the
-fallback, named as such.
+Composition is mechanical and lives in `scripts/generate.mjs` — do not
+hand-merge. Build the selection JSON and pipe it through:
 
-Merge rules for layers stacking on this one: shallow key merge; arrays
-(`mounts`) concatenate; `postCreateCommand` segments join with `&&` in layer
-order; no `«placeholder»` may survive into the generated file.
+```bash
+node «skill dir»/scripts/generate.mjs <<'EOF' > .devcontainer/devcontainer.json
+{ "project": "«workspace folder basename»",
+  "base": { "image": "«chosen image»", "source": "«detection source»" },
+  "layers": { "claude": …, "volumes": …, "shell": … },
+  "remoteUser": "«required when volumes or shell on»",
+  "detection": «detect.mjs output»,
+  "shellEnv": «shell-env.mjs output, when shell layer on» }
+EOF
+```
 
-**Never overwrite an existing `.devcontainer/`** — show a diff-style proposal of
-what you'd add and stop for the user's call.
+- **`project` is the workspace folder basename, never the package name** — it
+  names docker volumes, and package-derived names collide across worktrees of
+  the same package.
+- Base image: prefer a detection `trustedImages` entry and state its source in
+  the report; a toolchain-official image is the fallback, named as such.
+- **Never overwrite an existing `.devcontainer/`** — show a diff-style
+  proposal of what you'd add and stop for the user's call.
 
 ## Gates
 
@@ -20,12 +30,15 @@ what you'd add and stop for the user's call.
 Pass: final JSON outcome line contains `"outcome":"success"` — paste it.
 Fail: stop and fix; nothing else runs on a broken build.
 
-**Suite.** `npx --yes @devcontainers/cli exec --workspace-folder . bash -c 'CI=1 «test command»'`
+**Suite.** Use the RUNNER form from detection (`commands.test`, e.g.
+`npm test`) — never the raw script body, which loses `node_modules/.bin` from
+PATH:
+`npx --yes @devcontainers/cli exec --workspace-folder . bash -c 'export CI=1; «commands.test»'`
+(`export CI=1;` so it covers every segment of a compound command; never set CI
+in `containerEnv` — it strips colors from every terminal in the container.)
 Pass: the suite's own summary line pasted (e.g. `37 passed`).
 No test command detected: run the build/run command instead and mark the final
 report **UNVERIFIED** — that word, prominently.
-(`CI=1` goes on this command only, never in `containerEnv` — a global `CI` strips
-colors and interactivity from every terminal in the container.)
 
 ## Report notes
 

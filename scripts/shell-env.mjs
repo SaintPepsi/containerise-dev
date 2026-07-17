@@ -8,10 +8,10 @@
 // mechanisms are (a) installing the preferred shell in the container and
 // (b) a dotfiles repo applied via the user-level `dotfiles.repository` setting
 // or `devcontainer up --dotfiles-repository`.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 const RC_FILES = ['.zshrc', '.bashrc', '.bash_profile', '.profile'];
 const FRAMEWORKS = [
@@ -68,6 +68,17 @@ export function detectShellEnv(home = homedir(), env = process.env, platform = p
   return { shell, rcFiles, frameworks, dotfilesRepo };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Main-module guard that survives symlinked skill directories (first-trial
+// finding: argv[1] may be the symlinked path while import.meta.url is real).
+function isMain() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isMain()) {
   console.log(JSON.stringify(detectShellEnv(), null, 2));
 }

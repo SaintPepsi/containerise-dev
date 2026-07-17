@@ -25,12 +25,13 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 const KEYCHAIN_SERVICE = 'Claude Code-credentials';
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -129,7 +130,18 @@ export function injectRunning() {
   return res.status ?? 1;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Main-module guard that survives symlinked skill directories (first-trial
+// finding: argv[1] may be the symlinked path while import.meta.url is real).
+function isMain() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isMain()) {
   const mode = process.argv[2];
   if (mode === '--stage') process.exit(stage());
   else if (mode === '--install') process.exit(install());

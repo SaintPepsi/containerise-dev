@@ -6,11 +6,15 @@ through the bind mount, and unblocks unattended Claude use
 
 ## Generate
 
-1. Merge `./template.jsonc`: one named volume mount per detection
-   `dependencyDirs` entry, volume name `«project»-«dir»`.
-2. Pick a non-root `remoteUser` and **verify it exists in the base image
+Mounts, `remoteUser`, and the volume-ownership `chown` (a fresh named volume
+is root-owned; without the chown the first install dies with EACCES) all come
+from `generate.mjs`. This layer's remaining manual step:
+
+1. Pick a non-root `remoteUser` and **verify it exists in the base image
    before writing it**: `docker run --rm «image» id «user»` (e.g. `pwuser` in
-   Playwright images, `node` in node images).
+   Playwright images, `node` in node images). The chown uses `sudo` — if the
+   base image lacks sudo and the shell layer (common-utils, which installs it)
+   is off, flag that to the user before building.
 
 ## Gate
 
@@ -18,8 +22,11 @@ through the bind mount, and unblocks unattended Claude use
 Pass: each dependency dir shows a volume mount (not the host bind), and the
 user is the non-root `remoteUser`. Paste both lines.
 Disconfirming check after the suite gate has run: `git -C «target» status
---porcelain «dir»` on the **host** stays empty and host-native binaries still
-load — container installs must not have leaked through.
+--porcelain «dir»` on the **host** stays empty — container installs must not
+have leaked through. Distinguish outcomes honestly: a host dir that was never
+installed into is *absent* (`MODULE_NOT_FOUND` on the host is expected there),
+not *corrupted*; only report corruption if pre-existing host binaries stopped
+loading.
 
 ## Report notes
 

@@ -51,9 +51,10 @@ generates and verifies.
   Claude layer).
 
 Internally the skill is a router over self-contained layers
-(`layers/*/LAYER.md` holds each layer's template, generation steps, and
-verification gate); only the layers you select get loaded, and the final gate
-checklist is assembled from your selection.
+(`layers/*/LAYER.md` holds each layer's generation steps and verification
+gate; `scripts/generate.mjs` does the mechanical config composition); only the
+layers you select get loaded, and the final gate checklist is assembled from
+your selection.
 
 ## The gates
 

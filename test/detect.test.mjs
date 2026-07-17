@@ -9,8 +9,9 @@ describe('detectRepo', () => {
   test('npm repo: package manager, commands, dependency dirs', () => {
     const r = detectRepo(join(fixtures, 'npm-playwright'));
     expect(r.packageManager).toBe('npm');
-    expect(r.commands.test).toBe('playwright test');
-    expect(r.commands.build).toBe('node build.mjs');
+    expect(r.commands.test).toBe('npm test');
+    expect(r.commands.testBody).toBe('playwright test');
+    expect(r.commands.build).toBe('npm run build');
     expect(r.dependencyDirs).toEqual(['node_modules']);
     expect(r.existingDevcontainer).toBe(false);
   });

@@ -26,7 +26,9 @@ before their layer is selected.
 4. **Assemble the run.** For `base` plus each selected layer, read
    `./layers/«name»/LAYER.md`. Each carries its own Generate steps, Gate(s),
    and Report notes. Compose:
-   - the generation plan (merge templates per base's merge rules),
+   - the generation plan — config composition is `./scripts/generate.mjs`
+     (selection JSON in, devcontainer.json out; see `layers/base/LAYER.md`),
+     plus each layer's remaining manual steps,
    - the **gate checklist** — base's build + suite gates first, then each
      selected layer's gate, in selection order.
 5. Execute generation, then run every gate on the checklist. Evidence means

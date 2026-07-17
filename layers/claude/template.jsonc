@@ -1,7 +1,0 @@
-// Claude pass-through layer. Requires vendoring scripts/devcontainer-auth.mjs
-// into the target repo and gitignoring .devcontainer/.claude-creds.json.
-{
-  "features": { "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {} },
-  "initializeCommand": "node scripts/devcontainer-auth.mjs --stage",
-  "postCreateCommand": "«install deps command» && node scripts/devcontainer-auth.mjs --install"
-}

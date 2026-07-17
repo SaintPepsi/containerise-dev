@@ -8,9 +8,9 @@ project config.
 
 1. Run `node «this skill's directory»/scripts/shell-env.mjs` and read the JSON
    (`{ shell, rcFiles, frameworks, dotfilesRepo }`).
-2. Merge `./template.jsonc`, substituting from that JSON (zsh install +
-   default-shell flags, oh-my-zsh iff detected). Use the same `remoteUser` as
-   the volumes layer when both are selected.
+2. Config (common-utils feature: zsh install + default-shell flags, oh-my-zsh
+   iff detected) comes from `generate.mjs` via the `shellEnv` input. Use the
+   same `remoteUser` as the volumes layer when both are selected.
 3. Dotfiles guidance for the report (do NOT write into project config — it's
    personal, teammates get their own):
    - `dotfilesRepo` found → tell the user to set

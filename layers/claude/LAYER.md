@@ -5,12 +5,12 @@ sign-in into the container, surviving rebuilds (`references/pitfalls.md` §3).
 
 ## Generate
 
-1. Merge `./template.jsonc` (feature + the two lifecycle hooks).
-2. Vendor `scripts/devcontainer-auth.mjs` from this skill into the target
+Config (feature, lifecycle hooks, deps install) comes from `generate.mjs` —
+this layer's remaining manual steps:
+
+1. Vendor `scripts/devcontainer-auth.mjs` from this skill into the target
    repo's `scripts/`.
-3. Append to the target's `.gitignore`: `.devcontainer/.claude-creds.json`.
-4. Substitute `«install deps command»` in `postCreateCommand` from detection
-   (e.g. `npm ci`).
+2. Append to the target's `.gitignore`: `.devcontainer/.claude-creds.json`.
 
 ## Gate
 

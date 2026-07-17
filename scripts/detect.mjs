@@ -2,10 +2,10 @@
 // Repo scan for the containerise-dev skill. Emits JSON facts; interpretation
 // (e.g. which trusted image to use as the base) stays with the model.
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 const LOCKFILES = [
   ['bun.lock', 'bun'], ['bun.lockb', 'bun'],
@@ -43,9 +43,16 @@ export function detectRepo(root) {
   }
   if (!packageManager && pkg) packageManager = 'npm';
 
+  // Runner form ("npm test") keeps node_modules/.bin on PATH in-container;
+  // the raw body is kept for runtime scanning (first-trial Gate 2 finding).
+  const RUNNERS = { npm: 'npm', pnpm: 'pnpm', yarn: 'yarn', bun: 'bun' };
+  const runner = RUNNERS[packageManager] ?? 'npm';
   const commands = {};
-  if (pkg?.scripts?.test) commands.test = pkg.scripts.test;
-  if (pkg?.scripts?.build) commands.build = pkg.scripts.build;
+  if (pkg?.scripts?.test) {
+    commands.test = `${runner} test`;
+    commands.testBody = pkg.scripts.test;
+  }
+  if (pkg?.scripts?.build) commands.build = `${runner} run build`;
 
   const trustedImages = [];
   const seen = new Set();
@@ -93,7 +100,18 @@ export function detectHost() {
   };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Main-module guard that survives symlinked skill directories (first-trial
+// finding: argv[1] may be the symlinked path while import.meta.url is real).
+function isMain() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isMain()) {
   const root = process.argv[2] || process.cwd();
   console.log(JSON.stringify({ ...detectRepo(root), host: detectHost() }, null, 2));
 }
