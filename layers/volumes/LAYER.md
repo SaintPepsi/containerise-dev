@@ -21,12 +21,15 @@ from `generate.mjs`. This layer's remaining manual step:
 `npx --yes @devcontainers/cli exec --workspace-folder . bash -c 'mount | grep «dir»; id -un'`
 Pass: each dependency dir shows a volume mount (not the host bind), and the
 user is the non-root `remoteUser`. Paste both lines.
-Disconfirming check after the suite gate has run: `git -C «target» status
---porcelain «dir»` on the **host** stays empty — container installs must not
-have leaked through. Distinguish outcomes honestly: a host dir that was never
-installed into is *absent* (`MODULE_NOT_FOUND` on the host is expected there),
-not *corrupted*; only report corruption if pre-existing host binaries stopped
-loading.
+Disconfirming check after the suite gate has run — **inspect the host dir
+directly, never via `git status`** (dependency dirs are almost always
+gitignored, so a git check passes vacuously whether or not a leak occurred):
+record the host `«dir»`'s existence and entry count before the build, compare
+after the suite (`ls «target»/«dir» 2>/dev/null | wc -l`). Unchanged = the
+container's installs stayed in the volume. Distinguish outcomes honestly: a
+host dir that was never installed into is *absent* (expected on a fresh
+worktree), not *corrupted*; only report corruption if pre-existing host
+content changed.
 
 ## Report notes
 

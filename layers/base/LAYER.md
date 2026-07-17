@@ -16,6 +16,10 @@ node «skill dir»/scripts/generate.mjs <<'EOF' > .devcontainer/devcontainer.jso
 EOF
 ```
 
+- Input contract: `detection` is the **entire** `detect.mjs` JSON object
+  nested under that key (same for `shellEnv` from `shell-env.mjs`), and
+  `remoteUser` is **required** whenever the volumes or shell layer is on.
+  `scripts/generate.mjs`'s header comment is the authoritative spec.
 - **`project` is the workspace folder basename, never the package name** — it
   names docker volumes, and package-derived names collide across worktrees of
   the same package.
@@ -36,7 +40,9 @@ PATH:
 `npx --yes @devcontainers/cli exec --workspace-folder . bash -c 'export CI=1; «commands.test»'`
 (`export CI=1;` so it covers every segment of a compound command; never set CI
 in `containerEnv` — it strips colors from every terminal in the container.)
-Pass: the suite's own summary line pasted (e.g. `37 passed`).
+Pass: each suite segment's own summary line pasted (a compound command like
+`build && bun test && playwright test` produces one per runner, e.g.
+`90 pass` and `37 passed` — paste them all).
 No test command detected: run the build/run command instead and mark the final
 report **UNVERIFIED** — that word, prominently.
 
