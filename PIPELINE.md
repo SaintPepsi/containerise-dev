@@ -32,7 +32,8 @@ Pass: final line is a JSON outcome with `"outcome":"success"`. Paste it.
 Fail: stop, fix, re-run — do not proceed on a broken build.
 
 **Gate 2 — suite.** Run the detected test command via
-`npx --yes @devcontainers/cli exec --workspace-folder . «test command»`.
+`npx --yes @devcontainers/cli exec --workspace-folder . bash -c 'CI=1 «test command»'`
+(`CI=1` per-command, never in `containerEnv` — see `references/templates/base.jsonc`).
 Pass: the suite's own summary line pasted (e.g. `37 passed`).
 No test command detected: run the build/run command instead and mark the final
 report **UNVERIFIED** — say exactly that word, prominently.

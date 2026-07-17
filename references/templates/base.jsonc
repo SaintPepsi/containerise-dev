@@ -2,6 +2,7 @@
 // from detection output + the user's confirmed choices.
 {
   "name": "«project» Dev",
-  "image": "«base image — prefer a detected trustedImage; state why in the report»",
-  "containerEnv": { "CI": "1" }
+  "image": "«base image — prefer a detected trustedImage; state why in the report»"
+  // Do NOT set containerEnv.CI globally — it strips colors and interactivity
+  // from every terminal in the container. Gate 2 sets CI=1 per-command instead.
 }
