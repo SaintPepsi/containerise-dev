@@ -7,8 +7,8 @@
 //   - runtimes used by the suite but absent from image/manager (e.g. bun)
 //     are installed in postCreateCommand
 //   - `features` from multiple layers union by key (never clobber)
-//   - the project name comes from the workspace FOLDER (collision-safe
-//     across worktrees of the same package)
+//   - dependency volumes are keyed by ${devcontainerId} (mochi's pattern):
+//     cached across rebuilds, isolated across parallel copies
 //
 // Usage: node generate.mjs < selection.json > .devcontainer/devcontainer.json
 // Input JSON: { project, base: {image}, layers: {claude, volumes, shell},
@@ -37,8 +37,13 @@ export function generate(sel) {
 
   if (layers.volumes) {
     const dirs = detection.dependencyDirs ?? [];
+    // ${devcontainerId} (expanded by the devcontainer CLI at `up` time, never
+    // here) is stable across rebuilds of the same workspace but distinct per
+    // workspace path — so the volume caches across rebuilds AND parallel
+    // copies of the project (worktrees, codebay instances) stay isolated.
+    // Verified 2026-07-18 (docs/plans/2026-07-18-devcontainerid-volumes-design.md).
     config.mounts = dirs.map(
-      (dir) => `source=${project}-${dir},target=\${containerWorkspaceFolder}/${dir},type=volume`,
+      (dir) => `source=${dir}-\${devcontainerId},target=\${containerWorkspaceFolder}/${dir},type=volume`,
     );
     config.remoteUser = remoteUser;
     // A fresh named volume is root-owned; a non-root remoteUser can't write

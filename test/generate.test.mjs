@@ -31,9 +31,10 @@ describe('generate', () => {
       installOhMyZsh: true,
       username: 'pwuser',
     });
-    // volume per dependency dir, named by project (folder), not package
+    // volume per dependency dir, keyed by ${devcontainerId}: cached across
+    // rebuilds, isolated across parallel copies (worktrees, codebay)
     expect(c.mounts).toEqual([
-      'source=openjam-trial-main-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume',
+      'source=node_modules-${devcontainerId},target=${containerWorkspaceFolder}/node_modules,type=volume',
     ]);
     // postCreate order: chown volumes first, then missing runtimes, then deps, then auth install
     expect(c.postCreateCommand).toBe(
@@ -60,6 +61,16 @@ describe('generate', () => {
       detection: { packageManager: 'npm', dependencyDirs: ['node_modules'], commands: {} },
     });
     expect(c).toEqual({ name: 'plain Dev', image: 'node:20' });
+  });
+
+  test('volume names carry no project identity — ${devcontainerId} is the discriminator', () => {
+    // Two workspaces of the same repo (worktree, codebay copy) generate
+    // identical mounts; isolation comes from the CLI expanding
+    // ${devcontainerId} per workspace path, not from anything we compose.
+    const a = generate(fullSelection);
+    const b = generate({ ...fullSelection, project: 'openjam' });
+    expect(a.mounts).toEqual(b.mounts);
+    expect(a.mounts[0]).toContain('${devcontainerId}');
   });
 
   test('volumes without root-capable helper still chowns via sudo and says so', () => {

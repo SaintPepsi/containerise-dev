@@ -41,8 +41,14 @@ generates and verifies.
     by `postCreateCommand`, so `claude` works in the container terminal
     immediately and **survives rebuilds**. The staged file is gitignored and
     deleted after install.
-  - **Volume + user fixes**: named volumes over dependency dirs (so container
-    installs can't corrupt your host `node_modules`) and a non-root user.
+  - **Volume + user fixes**: `${devcontainerId}`-keyed volumes over dependency
+    dirs (so container installs can't corrupt your host `node_modules`) and a
+    non-root user. Id-keyed names cache across rebuilds but stay distinct per
+    workspace path, so parallel copies of a project — git worktrees,
+    [codebay](https://github.com/khromov/codebay) instances — never share a
+    dependency volume. The result runs unchanged under codebay: keep the
+    Claude layer (codebay copies credentials but doesn't install the binary
+    for projects shipping their own devcontainer).
   - **Preferred shell**: detects your host shell (zsh, oh-my-zsh, starship,
     dotfiles repo) and installs it as the container default; personal dotfiles
     are guided to the user-level `dotfiles.repository` setting, never baked
