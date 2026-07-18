@@ -22,7 +22,7 @@ before their layer is selected.
    - `./detect-first/SKILL.md`
    - `./wizard/SKILL.md`
    The mode returns a layer selection:
-   `{ base: { image, source }, layers: { claude, volumes, shell }, testCommand }`.
+   `{ base: { image, source }, layers: { claude, volumes, shell, skills }, testCommand }`.
 4. **Assemble the run.** For `base` plus each selected layer, read
    `./layers/«name»/LAYER.md`. Each carries its own Generate steps, Gate(s),
    and Report notes. Compose:

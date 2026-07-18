@@ -93,10 +93,20 @@ export function detectHost() {
   if (claudeCredentials === 'none' && existsSync(join(homedir(), '.claude', '.credentials.json'))) {
     claudeCredentials = 'file';
   }
+  let claudeSkillsCount = 0;
+  try {
+    // Non-hidden entries only, so the count matches the `ls | wc -l` the
+    // skills gate uses (readdirSync would also count .DS_Store and friends).
+    claudeSkillsCount = readdirSync(join(homedir(), '.claude', 'skills'))
+      .filter((name) => !name.startsWith('.')).length;
+  } catch {
+    // no skills dir: count stays 0
+  }
   return {
     platform: process.platform,
     docker: spawnSync('docker', ['info'], { stdio: 'ignore' }).status === 0,
     claudeCredentials,
+    claudeSkillsCount,
   };
 }
 

@@ -44,3 +44,17 @@ harmless, but it leaks host usernames/paths to anything running inside.
 planned worktree-based parallelism layer avoids it by construction (fresh
 worktrees contain only tracked files).
 **Knob:** none yet — mentioned in the generated report so users know.
+
+## 5. Bind mount auto-creates a root-owned parent
+
+**Symptom:** with a skills mount at `~/.claude/skills`, the claude layer's
+credential install dies: `EACCES: permission denied, open
+'/home/«user»/.claude/.credentials.json'`.
+**Cause:** Docker creates every missing directory on the bind target's path as
+root — mounting `~/.claude/skills` creates `~/.claude` root-owned, and the
+non-root user can't write beside the mount.
+**Fix:** `postCreateCommand` chowns the parent (`sudo mkdir -p ~/.claude &&
+sudo chown «user» ~/.claude`) — non-recursive, so the read-only mount itself
+is never touched — ordered **before** `devcontainer-auth.mjs --install`.
+**Knob:** the skills layer emits both the mount and the ordered chown
+(`layers/skills/LAYER.md`).

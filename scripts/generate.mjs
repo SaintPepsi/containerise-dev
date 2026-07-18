@@ -11,8 +11,9 @@
 //     cached across rebuilds, isolated across parallel copies
 //
 // Usage: node generate.mjs < selection.json > .devcontainer/devcontainer.json
-// Input JSON: { project, base: {image}, layers: {claude, volumes, shell},
-//   remoteUser?, detection: {packageManager, dependencyDirs, commands},
+// Input JSON: { project, base: {image}, layers: {claude, volumes, shell, skills},
+//   remoteUser? (required when volumes, shell, or skills is on),
+//   detection: {packageManager, dependencyDirs, commands},
 //   shellEnv?: {shell, frameworks} }
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +34,7 @@ export function generate(sel) {
   const { project, base, layers, remoteUser, detection, shellEnv } = sel;
   const config = { name: `${project} Dev`, image: base.image };
   const features = {};
+  const mounts = [];
   const postCreate = [];
 
   if (layers.volumes) {
@@ -42,13 +44,24 @@ export function generate(sel) {
     // workspace path — so the volume caches across rebuilds AND parallel
     // copies of the project (worktrees, codebay instances) stay isolated.
     // Verified 2026-07-18 (docs/plans/2026-07-18-devcontainerid-volumes-design.md).
-    config.mounts = dirs.map(
-      (dir) => `source=${dir}-\${devcontainerId},target=\${containerWorkspaceFolder}/${dir},type=volume`,
+    mounts.push(
+      ...dirs.map((dir) => `source=${dir}-\${devcontainerId},target=\${containerWorkspaceFolder}/${dir},type=volume`),
     );
     config.remoteUser = remoteUser;
     // A fresh named volume is root-owned; a non-root remoteUser can't write
     // into it until it's chowned (first-trial Gate 1 failure).
     for (const dir of dirs) postCreate.push(`sudo chown -R ${remoteUser}:${remoteUser} ${dir}`);
+  }
+
+  if (layers.skills) {
+    const home = `/home/${remoteUser}`;
+    mounts.push(`source=\${localEnv:HOME}/.claude/skills,target=${home}/.claude/skills,type=bind,readonly`);
+    config.remoteUser = remoteUser;
+    // Docker auto-creates the bind target's parent (~/.claude) root-owned,
+    // which breaks anything writing there — notably the claude layer's
+    // credential install (pitfalls.md §5). Chown the parent, never the
+    // read-only mount itself; must run before devcontainer-auth --install.
+    postCreate.push(`sudo mkdir -p ${home}/.claude && sudo chown ${remoteUser}:${remoteUser} ${home}/.claude`);
   }
 
   const testBody = detection.commands?.testBody ?? '';
@@ -57,6 +70,13 @@ export function generate(sel) {
   }
 
   if (layers.claude) {
+    // The claude-code feature's installer needs Node/npm; non-node images
+    // (bun, python, rust) lack it, and Debian's apt nodejs ships without npm
+    // so the feature's fallback bails (#4). Known node-bearing images
+    // (node, javascript-node, playwright) skip the extra feature.
+    if (!/node|playwright/.test(base.image)) {
+      features['ghcr.io/devcontainers/features/node:1'] = {};
+    }
     features['ghcr.io/anthropics/devcontainer-features/claude-code:1.0'] = {};
     config.initializeCommand = 'node scripts/devcontainer-auth.mjs --stage';
     const installDeps = INSTALL_DEPS[detection.packageManager];
@@ -73,6 +93,7 @@ export function generate(sel) {
     };
   }
 
+  if (mounts.length) config.mounts = mounts;
   if (Object.keys(features).length) config.features = features;
   if (postCreate.length) config.postCreateCommand = postCreate.join(' && ');
   return config;
