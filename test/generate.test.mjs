@@ -84,6 +84,24 @@ describe('generate', () => {
     expect(c.features['ghcr.io/devcontainers/features/node:1']).toBeUndefined();
   });
 
+  test("skills: 'home' binds the whole ~/.claude read-write, no parent fix", () => {
+    const c = generate({ ...fullSelection, layers: { ...fullSelection.layers, skills: 'home' } });
+    expect(c.mounts).toEqual([
+      'source=node_modules-${devcontainerId},target=${containerWorkspaceFolder}/node_modules,type=volume',
+      'source=${localEnv:HOME}/.claude,target=/home/pwuser/.claude,type=bind',
+    ]);
+    // rw bind owns ~/.claude — the §5 parent chown must NOT appear
+    expect(c.postCreateCommand).not.toContain('mkdir -p /home/pwuser/.claude');
+    // and it must not be readonly — sessions write through it
+    expect(c.mounts[1]).not.toContain('readonly');
+  });
+
+  test("skills: true stays an alias for the read-only 'skills' mode", () => {
+    const t = generate({ ...fullSelection, layers: { ...fullSelection.layers, skills: true } });
+    const s = generate({ ...fullSelection, layers: { ...fullSelection.layers, skills: 'skills' } });
+    expect(t).toEqual(s);
+  });
+
   test('disconfirming: skills off — no skills mount, no .claude parent fix', () => {
     const c = generate({ ...fullSelection, layers: { ...fullSelection.layers, skills: false } });
     expect(c.mounts).toHaveLength(1);

@@ -17,9 +17,12 @@ One question per decision, detection as context rather than proposal.
       `node «this skill's directory»/scripts/shell-env.mjs` first; offer to
       install their shell (`«shell»`, plus `«frameworks»` if any) as the
       container default. On/off.
-   5. **Global skills** — mount `~/.claude/skills`
-      (`host.claudeSkillsCount` is `«N»`) read-only into the container, so
-      global skills work inside. On/off; skip the question when the count is 0.
+   5. **Claude setup in the container** — three options
+      (`host.claudeSkillsCount` is `«N»`): **whole `~/.claude` read-write**
+      (skills + session history + settings; sessions survive rebuilds; the
+      container can write host `~/.claude` and creds land there as a file —
+      pitfalls §6), **skills only, read-only** (safe default), or **none**.
+      Skip the question when the count is 0 and default to none.
    6. **Test command** for the suite gate — confirm `commands.test` or take a
       correction; "none" is a valid answer and flags the run UNVERIFIED.
 3. Produce the layer selection contract

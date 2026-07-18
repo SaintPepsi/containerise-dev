@@ -58,3 +58,18 @@ sudo chown «user» ~/.claude`) — non-recursive, so the read-only mount itself
 is never touched — ordered **before** `devcontainer-auth.mjs --install`.
 **Knob:** the skills layer emits both the mount and the ordered chown
 (`layers/skills/LAYER.md`).
+
+## 6. Whole-home bind writes credentials onto the host
+
+**Symptom:** after using skills mode `home` with the claude layer, the host
+gains `~/.claude/.credentials.json` — surprising on macOS, where credentials
+previously lived only in the Keychain.
+**Cause:** the credential install writes `$CLAUDE_CONFIG_DIR/.credentials.json`
+inside the container; with `~/.claude` bound read-write, that write lands on
+the host.
+**Fix (awareness, not config):** the file is mode 600 and holds the same OAuth
+token the Keychain already holds. If a plaintext credentials file on the host
+is unacceptable, use skills mode `skills` (read-only, creds stay
+container-local) instead.
+**Knob:** none — the layer's Generate step requires saying this before
+building in `home` mode.

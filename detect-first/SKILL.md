@@ -15,8 +15,11 @@ Scan first, propose a complete config, confirm once.
    - **Volumes layer:** default ON iff `dependencyDirs` is non-empty.
    - **Shell layer:** run `node «this skill's directory»/scripts/shell-env.mjs`;
      default ON iff the detected shell is not the image's default (e.g. zsh).
-   - **Skills layer:** default ON iff `host.claudeSkillsCount` > 0 — say the
-     count ("mounts your «N» global skills read-only").
+   - **Skills layer:** default `'skills'` iff `host.claudeSkillsCount` > 0 —
+     say the count ("mounts your «N» global skills read-only"), and offer
+     `'home'` as the alternative ("whole ~/.claude read-write: skills +
+     session history survive rebuilds; container can write your host
+     ~/.claude, and creds land there as a file — pitfalls §6").
 4. Present the whole proposal as ONE AskUserQuestion round: accept as-is /
    toggle layers / change base image (multiSelect where it helps). Include the
    test command you'll use for the suite gate so the user can correct it now.
