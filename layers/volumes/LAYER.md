@@ -4,6 +4,12 @@ Prevents container installs from corrupting the host's dependency directories
 through the bind mount, and unblocks unattended Claude use
 (`references/pitfalls.md` §1 and §2).
 
+Volumes are keyed by `${devcontainerId}` (`«dir»-${devcontainerId}`), expanded
+by the devcontainer CLI at `up` time: stable across rebuilds of the same
+workspace (cache survives) and distinct per workspace path, so parallel copies
+of the same project — worktrees, [codebay](https://github.com/khromov/codebay)
+instances — never share a dependency volume.
+
 ## Generate
 
 Mounts, `remoteUser`, and the volume-ownership `chown` (a fresh named volume
@@ -21,6 +27,11 @@ from `generate.mjs`. This layer's remaining manual step:
 `npx --yes @devcontainers/cli exec --workspace-folder . bash -c 'mount | grep «dir»; id -un'`
 Pass: each dependency dir shows a volume mount (not the host bind), and the
 user is the non-root `remoteUser`. Paste both lines.
+Then confirm the volume is id-keyed — a `$` in the name means the CLI didn't
+expand `${devcontainerId}` (too-old CLI) and every workspace would share one
+literal-named volume:
+`docker inspect «containerId» -f '{{range .Mounts}}{{println .Name}}{{end}}' | grep «dir»`
+Pass: `«dir»-<52-char id>`, no `$`. Paste it.
 Disconfirming check after the suite gate has run — **inspect the host dir
 directly, never via `git status`** (dependency dirs are almost always
 gitignored, so a git check passes vacuously whether or not a leak occurred):
@@ -34,4 +45,15 @@ content changed.
 ## Report notes
 
 - First container start repopulates dependencies into the volume; expect one
-  slow install.
+  slow install. Regenerating over an older config (pre-`devcontainerId`
+  naming) orphans the old `«project»-«dir»` volume — safe to
+  `docker volume rm`.
+- **Using with codebay** (or any manager that copies the project per
+  instance): this config works unchanged — each copy's `devcontainerId`
+  differs, so parallel instances get their own volumes. Keep the claude layer
+  on: codebay injects credentials but does **not** install the `claude` binary
+  for projects shipping their own devcontainer, and the credential transport
+  is a harmless no-op when codebay's environment has no host credentials
+  (`--stage` exits 0). Avoid `${localEnv:HOME}` bind mounts if you run the
+  manager from its Docker image — they resolve against the manager's
+  container, not your machine.

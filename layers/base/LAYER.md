@@ -20,9 +20,9 @@ EOF
   nested under that key (same for `shellEnv` from `shell-env.mjs`), and
   `remoteUser` is **required** whenever the volumes or shell layer is on.
   `scripts/generate.mjs`'s header comment is the authoritative spec.
-- **`project` is the workspace folder basename, never the package name** — it
-  names docker volumes, and package-derived names collide across worktrees of
-  the same package.
+- **`project` is the workspace folder basename** — it only names the config
+  for humans (`"name": "«project» Dev"`). Volume identity comes from
+  `${devcontainerId}`, not from `project` (see `layers/volumes/LAYER.md`).
 - Base image: prefer a detection `trustedImages` entry and state its source in
   the report; a toolchain-official image is the fallback, named as such.
 - **Never overwrite an existing `.devcontainer/`** — show a diff-style
