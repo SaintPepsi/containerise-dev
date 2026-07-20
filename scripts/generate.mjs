@@ -11,10 +11,14 @@
 //     cached across rebuilds, isolated across parallel copies
 //
 // Usage: node generate.mjs < selection.json > .devcontainer/devcontainer.json
-// Input JSON: { project, base: {image}, layers: {claude, volumes, shell, skills},
+// Input JSON: { project, base: {image},
+//   layers: {claude, volumes, shell, skills: false|'skills'|'home'},
 //   remoteUser? (required when volumes, shell, or skills is on),
 //   detection: {packageManager, dependencyDirs, commands},
 //   shellEnv?: {shell, frameworks} }
+// layers.skills: 'home' = whole ~/.claude read-write (personal machines —
+//   skills + session history + settings, sessions survive rebuilds);
+//   'skills' or true = only ~/.claude/skills, read-only.
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -53,7 +57,18 @@ export function generate(sel) {
     for (const dir of dirs) postCreate.push(`sudo chown -R ${remoteUser}:${remoteUser} ${dir}`);
   }
 
-  if (layers.skills) {
+  // skills: 'home' binds the whole host ~/.claude read-write (skills, session
+  // history, settings — sessions survive rebuilds because they live on the
+  // host); 'skills' (alias: true) binds only ~/.claude/skills read-only.
+  const skillsMode = layers.skills === true ? 'skills' : layers.skills;
+  if (skillsMode === 'home') {
+    const home = `/home/${remoteUser}`;
+    mounts.push(`source=\${localEnv:HOME}/.claude,target=${home}/.claude,type=bind`);
+    config.remoteUser = remoteUser;
+    // No parent fix needed: the bind owns ~/.claude itself. Note pitfalls §6 —
+    // with the claude layer on, the credential install writes through this
+    // bind onto the host.
+  } else if (skillsMode === 'skills') {
     const home = `/home/${remoteUser}`;
     mounts.push(`source=\${localEnv:HOME}/.claude/skills,target=${home}/.claude/skills,type=bind,readonly`);
     config.remoteUser = remoteUser;
